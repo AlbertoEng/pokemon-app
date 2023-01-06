@@ -87,6 +87,8 @@ const PokemonNamePage: NextPage<Props> = ({ pokemon }) => {
     )
 }
 
+
+// generamos todas las rutas que queremos prerenderizar del lado del servidor 
 export const getStaticPaths: GetStaticPaths = async()=>{
 
 
@@ -101,26 +103,37 @@ export const getStaticPaths: GetStaticPaths = async()=>{
 
     return {
         paths: listadoNames,
-        fallback: false 
+        fallback: 'blocking' 
     }
 }
 
+// generamos las props para cada pagina que se renderiza en el lado del servidor.
 export const getStaticProps: GetStaticProps = async( ctx )=>{
 
     const {name} = ctx.params as {name: string};
-    const {data} = await pokeApi.get<PokemonFull>(`pokemon/${name}`)
 
-
-    const nuevoPokemon = {
-        id: data.id,
-        name: data.name,
-        sprites: data.sprites,
-        abilities: data.abilities
-    }
-
-    return {
-        props: {
-            pokemon: nuevoPokemon
+    try {
+        const {data} = await pokeApi.get<PokemonFull>(`pokemon/${name}`)
+        const nuevoPokemon = {
+            id: data.id,
+            name: data.name,
+            sprites: data.sprites,
+            abilities: data.abilities
+        }
+    
+        // revalidate es para incremental static regeneration
+        return {
+            props: {
+                pokemon: nuevoPokemon
+            },
+            revalidate: 10  
+        }
+    } catch (error) {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
         }
     }
 }

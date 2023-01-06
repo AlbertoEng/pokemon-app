@@ -99,27 +99,41 @@ export const getStaticPaths: GetStaticPaths = async()=>{
 
     return {
         paths: listadoIds,
-        fallback: false 
+        fallback: 'blocking' 
+   
     }
 }
 
 export const getStaticProps: GetStaticProps = async( ctx )=>{
 
     const {id} = ctx.params as {id: string};
-    const {data} = await pokeApi.get<PokemonFull>(`pokemon/${id}`)
 
-    const nuevoPokemon = {
-        id: data.id,
-        name: data.name,
-        sprites: data.sprites,
-        abilities: data.abilities
-    }
+    try{
+        const {data} = await pokeApi.get<PokemonFull>(`pokemon/${id}`)
 
-    return {
-        props: {
-            pokemon: nuevoPokemon
+        const nuevoPokemon = {
+            id: data.id,
+            name: data.name,
+            sprites: data.sprites,
+            abilities: data.abilities
         }
-    }
+        return {
+            props: {
+                pokemon: nuevoPokemon
+            },
+            revalidate: 10
+        }
+    }catch( error){
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }   
+    
+
+    
 }
 
 
